@@ -1,4 +1,4 @@
-const CACHE_NAME = 'titan61-gym-v3';
+const CACHE_NAME = 'titan61-gym-v4';
 const ASSETS = [
   './',
   './index.html',
@@ -38,12 +38,12 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      return cached || fetch(event.request).then((response) => {
+    fetch(event.request)
+      .then((response) => {
         const clone = response.clone();
         caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
         return response;
-      });
-    })
+      })
+      .catch(() => caches.match(event.request))
   );
 });

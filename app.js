@@ -464,9 +464,14 @@
             <div class="equip-explain-text">
               💡 <strong>Cómo cargar ${currentFirstKg} kg aquí:</strong> ${equipRule.breakdownFn(currentFirstKg)}
             </div>
-            <button class="open-calc-btn" onclick="openCalculatorForExercise('${ex.id}')">
-              🧮 Calcular mi peso aquí
-            </button>
+            <div style="display:flex;gap:6px;">
+              <button class="open-calc-btn" onclick="openCalculatorForExercise('${ex.id}')">
+                🧮 Calcular mi peso
+              </button>
+              <button class="btn-secondary" style="padding:6px 10px;font-size:11.5px;" title="Reiniciar series de este ejercicio" onclick="resetExerciseDraft('${ex.id}')">
+                ↺
+              </button>
+            </div>
           </div>
 
           <div class="coach-hint ${advice.type}">
@@ -788,9 +793,49 @@
     alert("¡Medidas derechas e izquierdas registradas con éxito!");
   };
 
+  window.resetExerciseDraft = function (exId) {
+    const found = findExerciseById(exId);
+    if (!found) return;
+    delete state.activeDrafts[exId];
+    saveState();
+    renderRoutineDay();
+  };
+
+  window.deleteBodyMetric = function (idx) {
+    if (!confirm("¿Seguro que quieres borrar este registro de medidas?")) return;
+    state.bodyMetrics.splice(idx, 1);
+    saveState();
+    renderBodyMetrics();
+  };
+
+  window.deleteStrengthEntry = function (exId, idx) {
+    if (!confirm("¿Seguro que quieres borrar esta sesión guardada del ejercicio?")) return;
+    if (!state.workoutHistory[exId]) return;
+    state.workoutHistory[exId].splice(idx, 1);
+    saveState();
+    window.renderExerciseStrengthHistory();
+    renderRoutineDay();
+  };
+
+  window.resetAllData = function () {
+    if (!confirm("¿Seguro que quieres borrar TODOS los registros de ejemplo y empezar en blanco?")) return;
+    state = {
+      selectedDayId: getDefaultDayId(),
+      supplementsByDate: {},
+      workoutHistory: {},
+      activeDrafts: {},
+      cardioLogs: {},
+      bodyMetrics: []
+    };
+    saveState();
+    initApp();
+    alert("Todos los datos han sido reiniciados en blanco.");
+  };
+
   function renderBodyMetrics() {
     const list = state.bodyMetrics;
-    const latest = list[list.length - 1] || defaultState.bodyMetrics[0];
+    const fallback = defaultState.bodyMetrics[0];
+    const latest = list[list.length - 1] || fallback;
     const first = list[0] || latest;
 
     // Pre-llenar campos con los últimos valores (con soporte retrocompatible)
@@ -813,6 +858,23 @@
     const diffWeight = (latest.weightKg - first.weightKg).toFixed(1);
     const diffWaist = (latest.waistCm - first.waistCm).toFixed(1);
 
+    if (list.length === 0) {
+      document.getElementById("recomp-summary").innerHTML = `
+        <div class="calc-box" style="grid-column: span 2;">
+          <strong>Sin medidas aún</strong>
+          <span>Ingresa tus medidas abajo y dale a Guardar</span>
+        </div>
+      `;
+      document.getElementById("metrics-tbody").innerHTML = `
+        <tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:12px;">No hay medidas registradas todavía.</td></tr>
+      `;
+      document.getElementById("metrics-chart-svg").innerHTML = `
+        <rect width="340" height="130" rx="12" fill="#080d18"/>
+        <text x="170" y="68" fill="#94a3b8" font-size="11" text-anchor="middle">Guarda tu primera medida para ver la gráfica</text>
+      `;
+      return;
+    }
+
     document.getElementById("recomp-summary").innerHTML = `
       <div class="calc-box">
         <strong>${latest.weightKg} kg</strong>
@@ -834,10 +896,10 @@
 
     const tbody = document.getElementById("metrics-tbody");
     tbody.innerHTML = list
-      .slice()
+      .map((m, realIdx) => ({ m, realIdx }))
       .reverse()
       .map(
-        (m) => `
+        ({ m, realIdx }) => `
       <tr>
         <td>${m.date}</td>
         <td><strong>${m.weightKg}kg</strong></td>
@@ -845,6 +907,11 @@
         <td>${m.armRightCm ?? m.armCm} / ${m.armLeftCm ?? m.armCm}</td>
         <td>${m.thighRightCm ?? m.thighCm} / ${m.thighLeftCm ?? m.thighCm}</td>
         <td>${m.calfRightCm ?? m.calfCm} / ${m.calfLeftCm ?? m.calfCm}</td>
+        <td style="text-align:right;">
+          <button onclick="deleteBodyMetric(${realIdx})" style="background:rgba(244,63,94,0.2);border:1px solid rgba(244,63,94,0.5);color:#fda4af;border-radius:6px;padding:3px 7px;font-size:11px;font-weight:800;cursor:pointer;">
+            🗑️ Borrar
+          </button>
+        </td>
       </tr>
     `
       )
@@ -921,16 +988,25 @@
     box.innerHTML = `
       <table class="metrics-table">
         <thead>
-          <tr><th>Fecha</th><th>Series (Peso × Reps)</th><th>Mejor Carga</th></tr>
+          <tr><th>Fecha</th><th>Series (Peso × Reps)</th><th>Mejor Carga</th><th></th></tr>
         </thead>
         <tbody>
           ${entries
-            .slice()
+            .map((e, realIdx) => ({ e, realIdx }))
             .reverse()
-            .map((e) => {
+            .map(({ e, realIdx }) => {
               const summary = e.sets.map((s) => `${s.kg}kg×${s.reps}`).join(" · ");
               const bestKg = Math.max(...e.sets.map((s) => Number(s.kg)));
-              return `<tr><td>${e.date}</td><td>${summary}</td><td><strong style="color:#34d399">${bestKg} kg</strong></td></tr>`;
+              return `<tr>
+                <td>${e.date}</td>
+                <td>${summary}</td>
+                <td><strong style="color:#34d399">${bestKg} kg</strong></td>
+                <td style="text-align:right;">
+                  <button onclick="deleteStrengthEntry('${exId}', ${realIdx})" style="background:rgba(244,63,94,0.2);border:1px solid rgba(244,63,94,0.5);color:#fda4af;border-radius:6px;padding:3px 7px;font-size:11px;font-weight:800;cursor:pointer;">
+                    🗑️ Borrar
+                  </button>
+                </td>
+              </tr>`;
             })
             .join("")}
         </tbody>

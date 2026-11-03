@@ -232,6 +232,7 @@
                 <th>Brazo D / I</th>
                 <th>Pierna D / I</th>
                 <th>Gemelo D / I</th>
+                <th></th>
               </tr>
             </thead>
             <tbody id="metrics-tbody"></tbody>
@@ -275,6 +276,9 @@
             ⬆️ Restaurar Respaldo
             <input type="file" accept=".json" style="display:none;" onchange="importBackup(event)" />
           </label>
+          <button class="btn-secondary" style="border-color:rgba(244,63,94,0.45);color:#fda4af;" onclick="resetAllData()">
+            🗑️ Reiniciar Todo de Cero
+          </button>
         </div>
       </div>
     </section>

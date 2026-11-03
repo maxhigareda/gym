@@ -1,0 +1,18 @@
+{
+  "name": "TITAN 61 — Hypertrophy & Gym Tracker",
+  "short_name": "TitanGym",
+  "description": "App personal de hipertrofia, doble progresión, guía biomecánica y seguimiento corporal (PPL 6 Días + Cardio).",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0b0f17",
+  "theme_color": "#10b981",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

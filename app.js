@@ -25,24 +25,7 @@
     workoutHistory: {},
     activeDrafts: {},
     cardioLogs: {},
-    bodyMetrics: [
-      {
-        date: getTodayISO(),
-        weightKg: 61.0,
-        chestCm: 94.0,
-        shouldersCm: 111.0,
-        waistCm: 76.0,
-        armRightCm: 33.6,
-        armLeftCm: 33.2,
-        forearmRightCm: 27.5,
-        forearmLeftCm: 27.2,
-        thighRightCm: 52.2,
-        thighLeftCm: 51.8,
-        calfRightCm: 35.6,
-        calfLeftCm: 35.4,
-        note: "Base Inicial (61 kg · 3 meses gym)"
-      }
-    ]
+    bodyMetrics: []
   };
 
   let state = loadState();
@@ -979,7 +962,20 @@
 
   function renderBodyMetrics() {
     const list = state.bodyMetrics;
-    const fallback = defaultState.bodyMetrics[0];
+    const fallback = {
+      weightKg: 61.0,
+      chestCm: 94.0,
+      shouldersCm: 111.0,
+      waistCm: 76.0,
+      armRightCm: 33.6,
+      armLeftCm: 33.2,
+      forearmRightCm: 27.5,
+      forearmLeftCm: 27.2,
+      thighRightCm: 52.2,
+      thighLeftCm: 51.8,
+      calfRightCm: 35.6,
+      calfLeftCm: 35.4
+    };
     const latest = list[list.length - 1] || fallback;
     const first = list[0] || latest;
 
@@ -1104,7 +1100,7 @@
     const box = document.getElementById("all-sessions-log-box");
     if (!box) return;
 
-    // 1. Recopilar todas las sesiones guardadas en workoutHistory
+    // 1. Recopilar ÚNICAMENTE las sesiones explícitamente guardadas en workoutHistory
     const savedRows = [];
     window.ROUTINE_DAYS.forEach((d) => {
       d.exercises.forEach((ex) => {
@@ -1122,68 +1118,22 @@
       });
     });
 
-    // 2. Recopilar series marcadas con ✓ o editadas en las tarjetas actuales (activeDrafts)
-    const activeCaptures = [];
-    window.ROUTINE_DAYS.forEach((d) => {
-      if (d.isRestDay) return;
-      d.exercises.forEach((ex) => {
-        const draft = state.activeDrafts[ex.id];
-        if (!draft) return;
-        const hasCheckedOrCustom = draft.some(
-          (s) => s.done || Number(s.kg) !== Number(ex.suggestedStartKg)
-        );
-        if (hasCheckedOrCustom) {
-          activeCaptures.push({
-            dayId: d.id,
-            dayName: d.shortName,
-            exName: ex.name,
-            sets: draft
-          });
-        }
-      });
-    });
-
     let html = "";
-
-    if (activeCaptures.length > 0) {
-      html += `
-        <div style="background:rgba(6,182,212,0.12);border:1px solid rgba(34,211,238,0.35);border-radius:12px;padding:12px;margin-bottom:12px;">
-          <div style="font-size:13px;font-weight:900;color:#22d3ee;margin-bottom:6px;">
-            ⚡ Pesos Actuales en tus Tarjetas de Rutina:
-          </div>
-          <table class="metrics-table" style="margin-top:4px;">
-            <thead>
-              <tr><th>Día / Ejercicio</th><th>Series Capturadas (Peso × Reps)</th></tr>
-            </thead>
-            <tbody>
-              ${activeCaptures
-                .map((c) => {
-                  const setsStr = c.sets
-                    .map((s) => `${s.done ? "✅ " : ""}${s.kg}kg×${s.reps}`)
-                    .join(" · ");
-                  return `<tr>
-                    <td><strong style="color:#f8fafc;">${c.exName}</strong><br/><span style="font-size:10.5px;color:#94a3b8;">${c.dayName}</span></td>
-                    <td style="color:#a7f3d0;font-weight:700;">${setsStr}</td>
-                  </tr>`;
-                })
-                .join("")}
-            </tbody>
-          </table>
-        </div>
-      `;
-    }
 
     if (savedRows.length === 0) {
       html += `
-        <div style="background:#080d18;border:1px solid rgba(148,163,184,0.15);border-radius:12px;padding:12px;font-size:12.5px;color:#cbd5e1;">
-          💡 <strong>Tip:</strong> Cuando termines tus ejercicios del día en la pestaña <strong>Entrenar</strong>, toca el botón verde de hasta abajo <strong>"💾 Terminar y Guardar Entrenamiento"</strong> para que quede archivado por fecha aquí abajo.
+        <div style="background:#080d18;border:1px solid rgba(148,163,184,0.15);border-radius:12px;padding:14px;font-size:12.5px;color:#cbd5e1;text-align:center;">
+          ℹ️ <strong>Aún no has guardado ninguna rutina de ejercicios.</strong><br/>
+          <span style="font-size:11.5px;color:#94a3b8;">
+            Tus medidas corporales se guardan en su sección independiente abajo. Cuando vayas al gym y termines tu entrenamiento en la pestaña <strong>Entrenar</strong>, toca el botón verde <em>"💾 Terminar y Guardar Entrenamiento"</em> para registrar tu rutina aquí.
+          </span>
         </div>
       `;
     } else {
       savedRows.reverse();
       html += `
         <div style="font-size:13px;font-weight:900;color:#34d399;margin-bottom:6px;">
-          ✅ Sesiones Guardadas por Fecha (${savedRows.length} registros):
+          ✅ Rutinas Guardadas Oficialmente (${savedRows.length} ejercicios registrados):
         </div>
         <div style="overflow-x:auto;">
           <table class="metrics-table" style="margin-top:2px;">

@@ -144,7 +144,17 @@
         const rows = await res.json();
         if (rows && rows.length > 0 && rows[0].data) {
           const cloudData = rows[0].data;
-          // Si la nube tiene datos más completos o recientes, fusionar preservando estructura
+          const cloudTimestamp = cloudData.lastUpdated || (rows[0].updated_at ? new Date(rows[0].updated_at).getTime() : 0);
+          const localTimestamp = state.lastUpdated || 0;
+
+          // Si los datos locales son más recientes que la nube, no los sobreescribas: sube los locales a la nube
+          if (localTimestamp > cloudTimestamp) {
+            console.log("Datos locales son más recientes, subiendo a Supabase...");
+            await pushToSupabase();
+            return;
+          }
+
+          // Si la nube es más reciente, actualizar datos locales
           state = Object.assign(structuredClone(defaultState), cloudData);
           localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
           // Refrescar vistas
@@ -161,7 +171,7 @@
           await pushToSupabase();
         }
       } else {
-        updateSyncBadge("error", "Crear tabla");
+        updateSyncBadge("error", "Error Supabase");
       }
     } catch (e) {
       console.warn("Supabase pull error:", e);
@@ -181,6 +191,7 @@
   }
 
   function saveState() {
+    state.lastUpdated = Date.now();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     scheduleCloudPush();
   }
@@ -691,6 +702,7 @@
     });
 
     saveState();
+    pushToSupabase();
     renderRoutineDay();
     renderAllSessionsLog();
     renderStrengthHistorySelect();
@@ -919,6 +931,7 @@
     });
 
     saveState();
+    pushToSupabase(); // Sincronizar inmediatamente sin esperar timer
     renderBodyMetrics();
     alert("¡Medidas derechas e izquierdas registradas con éxito!");
   };
@@ -935,6 +948,7 @@
     if (!confirm("¿Seguro que quieres borrar este registro de medidas?")) return;
     state.bodyMetrics.splice(idx, 1);
     saveState();
+    pushToSupabase(); // Sincronizar inmediatamente sin esperar timer
     renderBodyMetrics();
   };
 

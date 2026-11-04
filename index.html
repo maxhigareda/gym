@@ -20,7 +20,13 @@
       <div class="brand">
         <div class="brand-badge">T61</div>
         <div>
-          <h1>TITAN 61 PRO</h1>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <h1>TITAN 61 PRO</h1>
+            <div id="sync-status-badge" class="sync-indicator" title="Toca para sincronizar con la nube" onclick="manualSync()">
+              <span class="sync-dot"></span>
+              <span id="sync-status-text">Nube</span>
+            </div>
+          </div>
           <p>38 años · 61 kg · 1.61 m · Guía Paso 1 y 2</p>
         </div>
       </div>
@@ -272,11 +278,14 @@
       </div>
 
       <div class="info-card">
-        <h3>💾 Copia de Seguridad de tu Progreso</h3>
+        <h3>💾 Copia de Seguridad y Sincronización en la Nube</h3>
         <p style="font-size:12.5px;color:#94a3b8;margin-bottom:10px;">
-          Guarda o restaura tus marcas y medidas cuando quieras:
+          Tus datos se sincronizan automáticamente con tu base de datos Supabase entre tu iPhone y tu Mac. También puedes forzar sincronización o guardar un archivo local:
         </p>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+          <button class="btn-secondary" style="background:#0284c7;color:#fff;border-color:#38bdf8;" onclick="manualSync()">
+            ☁️ Sincronizar Ahora con Supabase
+          </button>
           <button class="btn-secondary" onclick="exportBackup()">⬇️ Descargar Respaldo (.json)</button>
           <label class="btn-secondary" style="cursor:pointer;">
             ⬆️ Restaurar Respaldo
@@ -286,6 +295,7 @@
             🗑️ Reiniciar Todo de Cero
           </button>
         </div>
+        <div id="sync-details" style="font-size:12px;color:#94a3b8;padding:8px 10px;background:rgba(15,23,42,0.6);border-radius:8px;"></div>
       </div>
     </section>
   </main>

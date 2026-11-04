@@ -62,8 +62,127 @@
     }
   }
 
+  const SUPABASE_CONFIG = {
+    url: "https://kdlffmjkdmlleabrnvqr.supabase.co",
+    anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkbGZmbWprZG1sbGVhYnJudnFyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM4MjQwOTMsImV4cCI6MjEwOTQwMDA5M30.r3e9eQll7y7OPruKCUeqP7fahQqruSHn4EEzeUsYZII",
+    recordId: "max_gym_sync_v1"
+  };
+
+  let syncTimeout = null;
+  let isSyncing = false;
+
+  function updateSyncBadge(status, text) {
+    const badge = document.getElementById("sync-status-badge");
+    const label = document.getElementById("sync-status-text");
+    const details = document.getElementById("sync-details");
+    if (!badge || !label) return;
+    badge.className = `sync-indicator ${status}`;
+    label.textContent = text;
+    if (details) {
+      const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      if (status === "synced") {
+        details.innerHTML = `✅ Conectado a Supabase · Última sincronización: <strong>${now}</strong>`;
+      } else if (status === "syncing") {
+        details.innerHTML = `🔄 Sincronizando con Supabase...`;
+      } else if (status === "offline") {
+        details.innerHTML = `⚠️ Sin conexión a internet (modo offline activado). Se sincronizará al volver a conectar.`;
+      } else if (status === "error") {
+        details.innerHTML = `⚠️ ${text}. Si es la primera vez, crea la tabla <code>gym_sync</code> en tu panel de Supabase.`;
+      }
+    }
+  }
+
+  async function pushToSupabase() {
+    if (!navigator.onLine) {
+      updateSyncBadge("offline", "Offline");
+      return;
+    }
+    try {
+      updateSyncBadge("syncing", "Guardando...");
+      const payload = {
+        id: SUPABASE_CONFIG.recordId,
+        data: state,
+        updated_at: new Date().toISOString()
+      };
+      const res = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/gym_sync`, {
+        method: "POST",
+        headers: {
+          "apikey": SUPABASE_CONFIG.anonKey,
+          "Authorization": `Bearer ${SUPABASE_CONFIG.anonKey}`,
+          "Content-Type": "application/json",
+          "Prefer": "resolution=merge-duplicates"
+        },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        updateSyncBadge("synced", "Nube al día");
+      } else {
+        const err = await res.json().catch(() => ({}));
+        console.warn("Error pushing to Supabase:", err);
+        updateSyncBadge("error", "Error tabla");
+      }
+    } catch (e) {
+      console.warn("Supabase network error:", e);
+      updateSyncBadge("offline", "Offline");
+    }
+  }
+
+  async function pullFromSupabase(isManual = false) {
+    if (!navigator.onLine) {
+      updateSyncBadge("offline", "Offline");
+      return;
+    }
+    try {
+      updateSyncBadge("syncing", "Cargando...");
+      const res = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/gym_sync?id=eq.${SUPABASE_CONFIG.recordId}&select=*`, {
+        headers: {
+          "apikey": SUPABASE_CONFIG.anonKey,
+          "Authorization": `Bearer ${SUPABASE_CONFIG.anonKey}`
+        }
+      });
+      if (res.ok) {
+        const rows = await res.json();
+        if (rows && rows.length > 0 && rows[0].data) {
+          const cloudData = rows[0].data;
+          // Si la nube tiene datos más completos o recientes, fusionar preservando estructura
+          state = Object.assign(structuredClone(defaultState), cloudData);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          // Refrescar vistas
+          renderSupplements();
+          renderRoutineDay();
+          renderBodyMetrics();
+          renderAllSessionsLog();
+          renderStrengthHistorySelect();
+          renderProfileStats();
+          updateSyncBadge("synced", "Nube al día");
+          if (isManual) alert("✅ Datos sincronizados correctamente desde Supabase.");
+        } else {
+          // La tabla existe pero está vacía, subimos nuestro estado local inicial
+          await pushToSupabase();
+        }
+      } else {
+        updateSyncBadge("error", "Crear tabla");
+      }
+    } catch (e) {
+      console.warn("Supabase pull error:", e);
+      updateSyncBadge("offline", "Offline");
+    }
+  }
+
+  window.manualSync = async function () {
+    await pullFromSupabase(true);
+  };
+
+  function scheduleCloudPush() {
+    clearTimeout(syncTimeout);
+    syncTimeout = setTimeout(() => {
+      pushToSupabase();
+    }, 1200);
+  }
+
   function saveState() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    scheduleCloudPush();
   }
 
   function findExerciseById(exId) {
@@ -1200,6 +1319,13 @@
     renderAllSessionsLog();
     renderStrengthHistorySelect();
     renderProfileStats();
+
+    window.addEventListener("online", () => {
+      pullFromSupabase();
+    });
+
+    // Cargar automáticamente los datos más recientes de Supabase al abrir
+    pullFromSupabase();
 
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("./sw.js").catch(() => {});

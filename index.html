@@ -110,8 +110,23 @@
       </div>
     </section>
 
-    <!-- PESTAÑA 3: MEDIDAS CORPORALES DERECHO E IZQUIERDO + SIMETRÍA -->
+    <!-- PESTAÑA 3: BITÁCORA DE SESIONES + MEDIDAS CORPORALES DERECHO E IZQUIERDO -->
     <section id="tab-progress" class="tab-view">
+      <!-- Bitácora de Pesos y Sesiones arriba del todo para verla al instante -->
+      <div class="info-card" style="border-color:rgba(16,185,129,0.4);">
+        <h3>📋 Bitácora de Pesos Registrados en tus Sesiones</h3>
+        <p style="font-size:12.5px;color:#94a3b8;margin-bottom:10px;">
+          Aquí ves todos los pesos y repeticiones que capturaste en el gimnasio (tanto tus sesiones guardadas como las series que marcaste con <strong>✓</strong> hoy):
+        </p>
+        <div id="all-sessions-log-box"></div>
+
+        <div class="field" style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(148,163,184,0.15);">
+          <label>🔎 Filtrar historial por un ejercicio específico:</label>
+          <select id="strength-ex-select" onchange="renderExerciseStrengthHistory()"></select>
+        </div>
+        <div id="strength-history-box"></div>
+      </div>
+
       <div class="info-card">
         <h3>📏 Control Corporal Quincenal (Derecho vs Izquierdo)</h3>
         <p style="font-size:12.5px;color:#94a3b8;">
@@ -239,15 +254,6 @@
           </table>
         </div>
       </div>
-
-      <div class="info-card">
-        <h3>📈 Historial de Fuerza por Ejercicio</h3>
-        <div class="field">
-          <label>Selecciona el ejercicio:</label>
-          <select id="strength-ex-select" onchange="renderExerciseStrengthHistory()"></select>
-        </div>
-        <div id="strength-history-box"></div>
-      </div>
     </section>
 
     <!-- PESTAÑA 4: SUPLEMENTOS Y RESPALDO -->
@@ -314,7 +320,7 @@
     </button>
     <button class="nav-btn" onclick="switchTab('progress', this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-      <span>Medidas D/I</span>
+      <span>Bitácora / D-I</span>
     </button>
     <button class="nav-btn" onclick="switchTab('profile', this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>

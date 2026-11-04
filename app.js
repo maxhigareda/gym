@@ -516,6 +516,7 @@
     if (!state.activeDrafts[exId]) return;
     state.activeDrafts[exId][setIdx][field] = field === "rir" ? val : Number(val);
     saveState();
+    renderAllSessionsLog();
     if (setIdx === 0 && field === "kg") {
       renderRoutineDay();
     }
@@ -527,6 +528,7 @@
     current.done = !current.done;
     saveState();
     renderRoutineDay();
+    renderAllSessionsLog();
     if (current.done) {
       window.startRestTimer(restSec, exName);
     }
@@ -563,6 +565,7 @@
 
     saveState();
     renderRoutineDay();
+    renderAllSessionsLog();
     renderStrengthHistorySelect();
     alert(`¡Entrenamiento guardado! Se registraron tus marcas en ${savedCount} ejercicios.`);
   };
@@ -813,6 +816,7 @@
     if (!state.workoutHistory[exId]) return;
     state.workoutHistory[exId].splice(idx, 1);
     saveState();
+    renderAllSessionsLog();
     window.renderExerciseStrengthHistory();
     renderRoutineDay();
   };
@@ -955,6 +959,121 @@
     `;
   }
 
+  function renderAllSessionsLog() {
+    const box = document.getElementById("all-sessions-log-box");
+    if (!box) return;
+
+    // 1. Recopilar todas las sesiones guardadas en workoutHistory
+    const savedRows = [];
+    window.ROUTINE_DAYS.forEach((d) => {
+      d.exercises.forEach((ex) => {
+        const hist = state.workoutHistory[ex.id] || [];
+        hist.forEach((entry, idx) => {
+          savedRows.push({
+            date: entry.date,
+            dayName: d.shortName,
+            exId: ex.id,
+            exName: ex.name,
+            sets: entry.sets,
+            idx
+          });
+        });
+      });
+    });
+
+    // 2. Recopilar series marcadas con ✓ o editadas en las tarjetas actuales (activeDrafts)
+    const activeCaptures = [];
+    window.ROUTINE_DAYS.forEach((d) => {
+      if (d.isRestDay) return;
+      d.exercises.forEach((ex) => {
+        const draft = state.activeDrafts[ex.id];
+        if (!draft) return;
+        const hasCheckedOrCustom = draft.some(
+          (s) => s.done || Number(s.kg) !== Number(ex.suggestedStartKg)
+        );
+        if (hasCheckedOrCustom) {
+          activeCaptures.push({
+            dayId: d.id,
+            dayName: d.shortName,
+            exName: ex.name,
+            sets: draft
+          });
+        }
+      });
+    });
+
+    let html = "";
+
+    if (activeCaptures.length > 0) {
+      html += `
+        <div style="background:rgba(6,182,212,0.12);border:1px solid rgba(34,211,238,0.35);border-radius:12px;padding:12px;margin-bottom:12px;">
+          <div style="font-size:13px;font-weight:900;color:#22d3ee;margin-bottom:6px;">
+            ⚡ Pesos Actuales en tus Tarjetas de Rutina:
+          </div>
+          <table class="metrics-table" style="margin-top:4px;">
+            <thead>
+              <tr><th>Día / Ejercicio</th><th>Series Capturadas (Peso × Reps)</th></tr>
+            </thead>
+            <tbody>
+              ${activeCaptures
+                .map((c) => {
+                  const setsStr = c.sets
+                    .map((s) => `${s.done ? "✅ " : ""}${s.kg}kg×${s.reps}`)
+                    .join(" · ");
+                  return `<tr>
+                    <td><strong style="color:#f8fafc;">${c.exName}</strong><br/><span style="font-size:10.5px;color:#94a3b8;">${c.dayName}</span></td>
+                    <td style="color:#a7f3d0;font-weight:700;">${setsStr}</td>
+                  </tr>`;
+                })
+                .join("")}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    if (savedRows.length === 0) {
+      html += `
+        <div style="background:#080d18;border:1px solid rgba(148,163,184,0.15);border-radius:12px;padding:12px;font-size:12.5px;color:#cbd5e1;">
+          💡 <strong>Tip:</strong> Cuando termines tus ejercicios del día en la pestaña <strong>Entrenar</strong>, toca el botón verde de hasta abajo <strong>"💾 Terminar y Guardar Entrenamiento"</strong> para que quede archivado por fecha aquí abajo.
+        </div>
+      `;
+    } else {
+      savedRows.reverse();
+      html += `
+        <div style="font-size:13px;font-weight:900;color:#34d399;margin-bottom:6px;">
+          ✅ Sesiones Guardadas por Fecha (${savedRows.length} registros):
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="metrics-table" style="margin-top:2px;">
+            <thead>
+              <tr><th>Fecha</th><th>Ejercicio</th><th>Series (Peso × Reps)</th><th></th></tr>
+            </thead>
+            <tbody>
+              ${savedRows
+                .map((r) => {
+                  const summary = r.sets.map((s) => `${s.kg}kg×${s.reps}`).join(" · ");
+                  return `<tr>
+                    <td>${r.date}<br/><span style="font-size:10px;color:#94a3b8;">${r.dayName}</span></td>
+                    <td><strong>${r.exName}</strong></td>
+                    <td style="color:#34d399;font-weight:700;">${summary}</td>
+                    <td style="text-align:right;">
+                      <button onclick="deleteStrengthEntry('${r.exId}', ${r.idx})" style="background:rgba(244,63,94,0.2);border:1px solid rgba(244,63,94,0.5);color:#fda4af;border-radius:6px;padding:3px 7px;font-size:11px;font-weight:800;cursor:pointer;">
+                        🗑️
+                      </button>
+                    </td>
+                  </tr>`;
+                })
+                .join("")}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    box.innerHTML = html;
+  }
+
   function renderStrengthHistorySelect() {
     const sel = document.getElementById("strength-ex-select");
     if (!sel) return;
@@ -1068,6 +1187,7 @@
 
     document.querySelectorAll(".nav-btn").forEach((b) => b.classList.remove("active"));
     if (btnEl) btnEl.classList.add("active");
+    if (tabId === "progress") renderAllSessionsLog();
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -1077,6 +1197,7 @@
     renderRoutineDay();
     populateCalculatorExercises();
     renderBodyMetrics();
+    renderAllSessionsLog();
     renderStrengthHistorySelect();
     renderProfileStats();
 

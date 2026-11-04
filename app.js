@@ -409,12 +409,18 @@
 
   function getOrInitDraft(ex, recommendedKg) {
     if (!state.activeDrafts[ex.id] || state.activeDrafts[ex.id].length !== ex.sets) {
-      state.activeDrafts[ex.id] = Array.from({ length: ex.sets }, (_, idx) => ({
-        kg: recommendedKg || ex.suggestedStartKg,
-        reps: idx === 0 ? ex.repRange[1] : Math.max(ex.repRange[0], ex.repRange[1] - idx),
-        rir: idx === ex.sets - 1 ? "0" : idx === 0 ? "2" : "1",
-        done: false
-      }));
+      const history = state.workoutHistory[ex.id] || [];
+      const lastEntry = history.length > 0 ? history[history.length - 1] : null;
+
+      state.activeDrafts[ex.id] = Array.from({ length: ex.sets }, (_, idx) => {
+        const prevSet = lastEntry && lastEntry.sets && lastEntry.sets[idx] ? lastEntry.sets[idx] : null;
+        return {
+          kg: prevSet ? Number(prevSet.kg) : (recommendedKg || ex.suggestedStartKg),
+          reps: prevSet ? Number(prevSet.reps) : (idx === 0 ? ex.repRange[1] : Math.max(ex.repRange[0], ex.repRange[1] - idx)),
+          rir: idx === ex.sets - 1 ? "0" : idx === 0 ? "2" : "1",
+          done: false
+        };
+      });
     }
     return state.activeDrafts[ex.id];
   }
@@ -521,12 +527,14 @@
             </div>
             <div class="input-wrap">
               <input type="number" step="0.5" value="${s.kg}"
-                onchange="updateSetField('${ex.id}', ${sIdx}, 'kg', this.value)" />
+                oninput="updateSetField('${ex.id}', ${sIdx}, 'kg', this.value, false)"
+                onchange="updateSetField('${ex.id}', ${sIdx}, 'kg', this.value, true)" />
               <span>kg</span>
             </div>
             <div class="input-wrap">
               <input type="number" step="1" value="${s.reps}"
-                onchange="updateSetField('${ex.id}', ${sIdx}, 'reps', this.value)" />
+                oninput="updateSetField('${ex.id}', ${sIdx}, 'reps', this.value, false)"
+                onchange="updateSetField('${ex.id}', ${sIdx}, 'reps', this.value, true)" />
               <span>reps</span>
             </div>
             <select onchange="updateSetField('${ex.id}', ${sIdx}, 'rir', this.value)">
@@ -631,12 +639,12 @@
     container.innerHTML = html;
   }
 
-  window.updateSetField = function (exId, setIdx, field, val) {
+  window.updateSetField = function (exId, setIdx, field, val, shouldRender = true) {
     if (!state.activeDrafts[exId]) return;
     state.activeDrafts[exId][setIdx][field] = field === "rir" ? val : Number(val);
     saveState();
     renderAllSessionsLog();
-    if (setIdx === 0 && field === "kg") {
+    if (shouldRender && setIdx === 0 && field === "kg") {
       renderRoutineDay();
     }
   };
@@ -686,7 +694,7 @@
     renderRoutineDay();
     renderAllSessionsLog();
     renderStrengthHistorySelect();
-    alert(`¡Entrenamiento guardado! Se registraron tus marcas en ${savedCount} ejercicios.`);
+    alert(`¡Entrenamiento guardado y sincronizado! Se registraron tus marcas en ${savedCount} ejercicios.`);
   };
 
   // =========================================================================

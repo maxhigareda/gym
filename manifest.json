@@ -1,11 +1,11 @@
 {
-  "name": "TITAN 61 — Hypertrophy & Gym Tracker",
-  "short_name": "TitanGym",
-  "description": "App personal de hipertrofia, doble progresión, guía biomecánica y seguimiento corporal (PPL 6 Días + Cardio).",
+  "name": "GymMax — MMA & Hypertrophy Tracker",
+  "short_name": "GymMax",
+  "description": "App personal de hipertrofia y acondicionamiento estilo UFC Gym (PPL 6 Días + Cardio).",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#0b0f17",
-  "theme_color": "#10b981",
+  "background_color": "#0a0a0a",
+  "theme_color": "#d20a0a",
   "orientation": "portrait",
   "icons": [
     {

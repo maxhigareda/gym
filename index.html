@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="theme-color" content="#05080f" />
+  <meta name="theme-color" content="#080808" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>TITAN 61 PRO — Hypertrophy & Gym Coach</title>
+  <title>GymMax — MMA & Hypertrophy</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icon.svg" />
@@ -14,132 +14,86 @@
 </head>
 <body>
 
-  <!-- Header Glassmórfico con Cronómetro de 60m y Suplementos -->
+  <!-- Header UFC GYM Style -->
   <header class="app-header">
     <div class="header-top">
       <div class="brand">
-        <div class="brand-badge">T61</div>
-        <div>
-          <div style="display:flex;align-items:center;gap:6px;">
-            <h1>TITAN 61 PRO</h1>
-            <div id="sync-status-badge" class="sync-indicator" title="Toca para sincronizar con la nube" onclick="manualSync()">
-              <span class="sync-dot"></span>
-              <span id="sync-status-text">Nube</span>
-            </div>
+        <div class="brand-badge">MAX</div>
+        <div class="brand-info">
+          <h1>GYM<span>MAX</span></h1>
+          <div id="live-header-stats" class="brand-stats-sub">
+            <!-- Se actualiza dinámicamente con tu último peso real y medidas -->
+            38 años · 62.0 kg · 1.61 m
           </div>
-          <p>38 años · 61 kg · 1.61 m · Guía Paso 1 y 2</p>
         </div>
       </div>
-      <button id="workout-clock-btn" class="workout-clock-btn" onclick="toggleWorkoutClock()">
-        <span>⏱</span>
-        <span id="workout-clock-label">00:00 / 60m</span>
-      </button>
+
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div id="sync-status-badge" class="sync-indicator" title="Toca para sincronizar con Supabase" onclick="manualSync()">
+          <span class="sync-dot"></span>
+          <span id="sync-status-text">Nube</span>
+        </div>
+        <button id="workout-clock-btn" class="workout-clock-btn" onclick="toggleWorkoutClock()">
+          <span>⏱</span>
+          <span id="workout-clock-label">00:00</span>
+        </button>
+      </div>
     </div>
 
+    <!-- Quick Checklist Suplementos UFC -->
     <div class="supp-strip">
       <div id="supp-creatine" class="supp-pill" onclick="toggleSupplement('creatine')">
-        <span>⚡ Creatina (5g hoy)</span>
+        <span>⚡ Creatina (5g)</span>
         <span class="status-dot"></span>
       </div>
       <div id="supp-protein" class="supp-pill" onclick="toggleSupplement('protein')">
-        <span>🥩 Proteína (~115g hoy)</span>
+        <span>🥩 Proteína (115g)</span>
         <span class="status-dot"></span>
       </div>
     </div>
   </header>
 
   <main>
-    <!-- PESTAÑA 1: ENTRENAR HOY (RUTINA + FOTOS PASO 1 Y 2) -->
+    <!-- TAB 1: ENTRENAMIENTO HOY -->
     <section id="tab-workout" class="tab-view active">
       <div id="day-carousel" class="day-carousel"></div>
+      
+      <!-- KPIs rápidos del día seleccionado -->
+      <div id="day-kpi-bar" class="kpi-row"></div>
+
       <div id="routine-container"></div>
     </section>
 
-    <!-- PESTAÑA 2: CALCULADORA POR EJERCICIO Y MÁQUINA ESPECÍFICA -->
-    <section id="tab-guide" class="tab-view">
+    <!-- TAB 2: KPIs & HISTORIAL CON VISTA DETALLADA -->
+    <section id="tab-kpis" class="tab-view">
       <div class="info-card">
-        <h3>🧮 Calculadora de Peso por Ejercicio y Máquina</h3>
-        <p style="font-size:12.5px;color:#94a3b8;margin-bottom:12px;">
-          Selecciona el ejercicio exacto de tu rutina. La calculadora te explica <strong>cómo se cuenta el peso en esa máquina/barra/mancuerna</strong> y te calcula cuánto poner para que tu <strong>3ª serie llegue al fallo</strong>:
+        <h3>📊 <span>KPIs</span> de Desempeño por Ejercicio</h3>
+        <p style="font-size:12px;color:#999;font-family:-apple-system, sans-serif;margin-bottom:12px;">
+          Tus marcas máximas (PR), último peso cargado y volumen total. Toca <strong>"Ver Detalle"</strong> en cualquier ejercicio para ver cada una de tus sesiones:
         </p>
-
-        <div class="field">
-          <label>1. Elige el Ejercicio y Máquina de tu rutina:</label>
-          <select id="calc-exercise-select" onchange="onCalcExerciseChange()"></select>
-        </div>
-
-        <!-- Ficha explicativa de la máquina seleccionada -->
-        <div id="calc-machine-banner" class="machine-summary-card"></div>
-
-        <div class="form-grid" style="margin-top:12px;">
-          <div class="field">
-            <label id="calc-kg-label">2. Peso que probaste (kg)</label>
-            <input id="calc-kg" type="number" step="0.5" value="40" oninput="calculateHypertrophyLoads()" />
-          </div>
-          <div class="field">
-            <label>3. Repeticiones que sacaste</label>
-            <input id="calc-reps" type="number" step="1" value="10" oninput="calculateHypertrophyLoads()" />
-          </div>
-        </div>
-
-        <div class="field" style="margin-top:10px;">
-          <label>4. ¿Qué tan pesada sentiste esa serie al terminar?</label>
-          <select id="calc-rir" onchange="calculateHypertrophyLoads()">
-            <option value="0">🔥 Llegué al fallo total (No podía hacer ni 1 más · RIR 0)</option>
-            <option value="1">💪 Muy dura (Solo me cabía 1 repetición más · RIR 1)</option>
-            <option value="2" selected>✅ Controlada (Me cabían 2 repeticiones más · RIR 2)</option>
-            <option value="3">⚡ Ligera (Me cabían 3 o 4 repeticiones más · RIR 3)</option>
-          </select>
-        </div>
-
-        <div style="margin-top:14px;">
-          <h4 style="font-size:13.5px;color:#22d3ee;font-weight:900;">
-            📋 Tu Plan Exacto de Series y Discos/Placas para este Ejercicio:
-          </h4>
-          <div id="calc-output"></div>
-        </div>
-      </div>
-
-      <div class="info-card">
-        <h3>🔄 ¿Cada cuánto cambiar o alternar tu rutina?</h3>
-        <ul style="font-size:12.5px;color:#cbd5e1;margin-left:16px;display:flex;flex-direction:column;gap:8px;">
-          <li>
-            <strong>Semanas 1 a 8 (Mantén los mismos ejercicios):</strong> Si cambias de ejercicios cada semana, tu cerebro solo aprende coordinación pero el músculo no crece. Quédate con estos mismos ejercicios durante <strong>8 semanas</strong> buscando subir 1 repetición o +2.5 kg.
-          </li>
-          <li>
-            <strong>Semana 9 (Semana de Descarga):</strong> Cada 8 semanas, haz 1 semana suave (solo 2 series por ejercicio sin llegar al fallo) para recuperar tendones, hombros y codos.
-          </li>
-          <li>
-            <strong>Semana 10 (Variación Inteligente):</strong> Solo cambia los ejercicios en los que lleves 3 semanas estancado o te incomoden articularmente.
-          </li>
-        </ul>
+        <div id="exercises-kpi-list"></div>
       </div>
     </section>
 
-    <!-- PESTAÑA 3: MEDIDAS CORPORALES Y HISTORIAL -->
-    <section id="tab-progress" class="tab-view">
-      <!-- 1. SECCIÓN DE MEDIDAS CORPORALES (TU REGISTRO PERSONAL) -->
-      <div class="info-card" style="border-color:rgba(16,185,129,0.5);">
-        <h3>📏 Tus Medidas Corporales (Derecho vs Izquierdo)</h3>
-        <p style="font-size:12.5px;color:#94a3b8;">
-          Registra tus medidas aquí de forma independiente a tus rutinas de gimnasio. Mídete en ayunas cada 14 días:
+    <!-- TAB 3: MEDIDAS CORPORALES (DERECHO VS IZQUIERDO) -->
+    <section id="tab-measures" class="tab-view">
+      <div class="info-card">
+        <h3>📏 Control Corporal <span>Derecho vs Izquierdo</span></h3>
+        <p style="font-size:12px;color:#999;font-family:-apple-system, sans-serif;margin-bottom:10px;">
+          Tus medidas son 100% independientes de las rutinas de pesas. Mídete en ayunas cada 14 días:
         </p>
 
-        <div id="recomp-summary" class="calc-results"></div>
+        <!-- KPI Resumen Corporal Actual -->
+        <div id="recomp-summary" class="kpi-row"></div>
 
-        <div style="margin-top:12px;">
-          <svg id="metrics-chart-svg" viewBox="0 0 340 130" style="width:100%;height:auto;border:1px solid rgba(148,163,184,0.18);border-radius:12px;"></svg>
-        </div>
-
-        <form onsubmit="addBodyMetric(event)" style="margin-top:14px;">
-          <div class="bilateral-section-title">⚖️ Peso y Tronco General</div>
+        <form onsubmit="addBodyMetric(event)" style="margin-top:12px;">
           <div class="form-grid">
             <div class="field">
-              <label>Peso en ayunas (kg)</label>
+              <label>Peso en Ayunas (kg)</label>
               <input id="m-weight" type="number" step="0.1" required />
             </div>
             <div class="field">
-              <label>Cintura al ombligo (cm)</label>
+              <label>Cintura al Ombligo (cm)</label>
               <input id="m-waist" type="number" step="0.1" />
             </div>
             <div class="field">
@@ -147,98 +101,99 @@
               <input id="m-chest" type="number" step="0.1" />
             </div>
             <div class="field">
-              <label>Hombros circunferencia (cm)</label>
+              <label>Hombros Circunferencia (cm)</label>
               <input id="m-shoulders" type="number" step="0.1" />
             </div>
           </div>
 
-          <div class="bilateral-section-title">💪 Comparativa Bilateral (Derecho vs Izquierdo)</div>
+          <div style="font-size:12px;font-weight:900;text-transform:uppercase;color:#d20a0a;margin:14px 0 8px;">
+            Simetría Bilateral (cm)
+          </div>
 
-          <!-- Bíceps Derecho vs Izquierdo -->
+          <!-- Bíceps -->
           <div class="bilateral-pair-card">
             <div class="bilateral-pair-head">
-              <span>💪 Brazo / Bíceps Contraído</span>
-              <span id="sym-arm"></span>
+              <span>Bíceps / Brazo</span>
+              <span id="sym-arm" style="font-size:11px;color:#c1a14f;"></span>
             </div>
             <div class="lr-inputs">
               <div class="lr-box">
-                <label>👉 DERECHO (cm)</label>
+                <label>DERECHO (cm)</label>
                 <input id="m-arm-r" type="number" step="0.1" oninput="updateLiveSymmetryBadges()" />
               </div>
               <div class="lr-box">
-                <label>👈 IZQUIERDO (cm)</label>
+                <label>IZQUIERDO (cm)</label>
                 <input id="m-arm-l" type="number" step="0.1" oninput="updateLiveSymmetryBadges()" />
               </div>
             </div>
           </div>
 
-          <!-- Antebrazo Derecho vs Izquierdo -->
+          <!-- Antebrazo -->
           <div class="bilateral-pair-card">
             <div class="bilateral-pair-head">
-              <span>🤜 Antebrazo</span>
-              <span id="sym-forearm"></span>
+              <span>Antebrazo</span>
+              <span id="sym-forearm" style="font-size:11px;color:#c1a14f;"></span>
             </div>
             <div class="lr-inputs">
               <div class="lr-box">
-                <label>👉 DERECHO (cm)</label>
+                <label>DERECHO (cm)</label>
                 <input id="m-forearm-r" type="number" step="0.1" oninput="updateLiveSymmetryBadges()" />
               </div>
               <div class="lr-box">
-                <label>👈 IZQUIERDO (cm)</label>
+                <label>IZQUIERDO (cm)</label>
                 <input id="m-forearm-l" type="number" step="0.1" oninput="updateLiveSymmetryBadges()" />
               </div>
             </div>
           </div>
 
-          <!-- Pierna / Muslo Derecho vs Izquierdo -->
+          <!-- Pierna -->
           <div class="bilateral-pair-card">
             <div class="bilateral-pair-head">
-              <span>🦵 Pierna / Muslo Medio</span>
-              <span id="sym-thigh"></span>
+              <span>Muslo / Pierna</span>
+              <span id="sym-thigh" style="font-size:11px;color:#c1a14f;"></span>
             </div>
             <div class="lr-inputs">
               <div class="lr-box">
-                <label>👉 DERECHO (cm)</label>
+                <label>DERECHO (cm)</label>
                 <input id="m-thigh-r" type="number" step="0.1" oninput="updateLiveSymmetryBadges()" />
               </div>
               <div class="lr-box">
-                <label>👈 IZQUIERDO (cm)</label>
+                <label>IZQUIERDO (cm)</label>
                 <input id="m-thigh-l" type="number" step="0.1" oninput="updateLiveSymmetryBadges()" />
               </div>
             </div>
           </div>
 
-          <!-- Pantorrilla Derecha vs Izquierda -->
+          <!-- Pantorrilla -->
           <div class="bilateral-pair-card">
             <div class="bilateral-pair-head">
-              <span>👟 Pantorrilla / Gemelo</span>
-              <span id="sym-calf"></span>
+              <span>Pantorrilla / Gemelo</span>
+              <span id="sym-calf" style="font-size:11px;color:#c1a14f;"></span>
             </div>
             <div class="lr-inputs">
               <div class="lr-box">
-                <label>👉 DERECHO (cm)</label>
+                <label>DERECHO (cm)</label>
                 <input id="m-calf-r" type="number" step="0.1" oninput="updateLiveSymmetryBadges()" />
               </div>
               <div class="lr-box">
-                <label>👈 IZQUIERDO (cm)</label>
+                <label>IZQUIERDO (cm)</label>
                 <input id="m-calf-l" type="number" step="0.1" oninput="updateLiveSymmetryBadges()" />
               </div>
             </div>
           </div>
 
-          <button type="submit" class="btn-primary">➕ Guardar Medidas (Derecho e Izquierdo)</button>
+          <button type="submit" class="btn-primary">Guardar Medidas</button>
         </form>
 
-        <div style="overflow-x:auto;margin-top:14px;">
+        <div style="overflow-x:auto;margin-top:16px;">
           <table class="metrics-table">
             <thead>
               <tr>
                 <th>Fecha</th>
                 <th>Peso</th>
                 <th>Cintura</th>
-                <th>Brazo D / I</th>
-                <th>Pierna D / I</th>
-                <th>Gemelo D / I</th>
+                <th>Brazo D/I</th>
+                <th>Pierna D/I</th>
                 <th></th>
               </tr>
             </thead>
@@ -246,97 +201,100 @@
           </table>
         </div>
       </div>
-
-      <!-- 2. SECCIÓN DE RUTINAS Y PESOS DE GYM (TOTALMENTE SEPARADA) -->
-      <div class="info-card">
-        <h3>🏋️ Historial de Rutinas de Gym</h3>
-        <p style="font-size:12.5px;color:#94a3b8;margin-bottom:10px;">
-          Aquí solo aparecerán las sesiones cuando termines tu entrenamiento en el gimnasio y toques <strong>"Terminar y Guardar Entrenamiento"</strong>:
-        </p>
-        <div id="all-sessions-log-box"></div>
-
-        <div class="field" style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(148,163,184,0.15);">
-          <label>🔎 Filtrar por ejercicio individual:</label>
-          <select id="strength-ex-select" onchange="renderExerciseStrengthHistory()"></select>
-        </div>
-        <div id="strength-history-box"></div>
-      </div>
-    </section>
     </section>
 
-    <!-- PESTAÑA 4: SUPLEMENTOS Y RESPALDO -->
-    <section id="tab-profile" class="tab-view">
+    <!-- TAB 4: CALCULADORA & AJUSTES -->
+    <section id="tab-calc" class="tab-view">
       <div class="info-card">
-        <h3>⚡ Tu Plan de Suplementos (61 kg · 38 años · 1.61 m)</h3>
-        <div id="supp-stats-box" class="calc-results" style="margin-bottom:12px;"></div>
-        <ul style="font-size:12.5px;color:#cbd5e1;margin-left:16px;display:flex;flex-direction:column;gap:8px;">
-          <li>
-            <strong>Creatina Monohidratada (5 g diarios):</strong> Tómala todos los días sin fallar (incluso el lunes de descanso). Mantiene tus músculos hidratados con mayor volumen visual y te da 1–2 repeticiones extra en la 3ª serie al fallo.
-          </li>
-          <li>
-            <strong>Proteína Diaria Total (~115 g/día):</strong> Para tus 61 kg, tu meta exacta de hipertrofia limpia son <strong>110 a 122 gramos diarios de proteína</strong> (tu batido aporta ~25 g; suma huevos, pollo, carne magra, atún o yogur griego en tus comidas).
-          </li>
-        </ul>
+        <h3>🧮 Calculadora de <span>Carga y Máquina</span></h3>
+        <p style="font-size:12px;color:#999;font-family:-apple-system, sans-serif;margin-bottom:12px;">
+          Calcula cuánto poner en discos o placas para llegar al fallo en la 3ª serie:
+        </p>
+
+        <div class="field">
+          <label>Ejercicio</label>
+          <select id="calc-exercise-select" onchange="onCalcExerciseChange()"></select>
+        </div>
+
+        <div id="calc-machine-banner" style="background:#0d0d0d;border:1px solid #d20a0a;border-radius:6px;padding:12px;margin:12px 0;"></div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label id="calc-kg-label">Peso que probaste (kg)</label>
+            <input id="calc-kg" type="number" step="0.5" value="40" oninput="calculateHypertrophyLoads()" />
+          </div>
+          <div class="field">
+            <label>Reps logradas</label>
+            <input id="calc-reps" type="number" step="1" value="10" oninput="calculateHypertrophyLoads()" />
+          </div>
+        </div>
+
+        <div class="field" style="margin-top:10px;">
+          <label>¿Qué tan dura la sentiste?</label>
+          <select id="calc-rir" onchange="calculateHypertrophyLoads()">
+            <option value="0">Al fallo total (RIR 0)</option>
+            <option value="1">Dura (1 rep en el tanque · RIR 1)</option>
+            <option value="2" selected>Controlada (2 reps en el tanque · RIR 2)</option>
+            <option value="3">Ligera (3+ reps · RIR 3)</option>
+          </select>
+        </div>
+
+        <div id="calc-output" style="margin-top:14px;"></div>
       </div>
 
       <div class="info-card">
-        <h3>💾 Copia de Seguridad y Sincronización en la Nube</h3>
-        <p style="font-size:12.5px;color:#94a3b8;margin-bottom:10px;">
-          Tus datos se sincronizan automáticamente con tu base de datos Supabase entre tu iPhone y tu Mac. También puedes forzar sincronización o guardar un archivo local:
-        </p>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
-          <button class="btn-secondary" style="background:#0284c7;color:#fff;border-color:#38bdf8;" onclick="manualSync()">
-            ☁️ Sincronizar Ahora con Supabase
+        <h3>☁️ Respaldo y <span>Nube Supabase</span></h3>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+          <button class="btn-secondary" style="background:#d20a0a;border-color:#ff3333;" onclick="manualSync()">
+            Sincronizar Supabase
           </button>
-          <button class="btn-secondary" onclick="exportBackup()">⬇️ Descargar Respaldo (.json)</button>
-          <label class="btn-secondary" style="cursor:pointer;">
-            ⬆️ Restaurar Respaldo
-            <input type="file" accept=".json" style="display:none;" onchange="importBackup(event)" />
-          </label>
-          <button class="btn-secondary" style="border-color:rgba(244,63,94,0.45);color:#fda4af;" onclick="resetAllData()">
-            🗑️ Reiniciar Todo de Cero
+          <button class="btn-secondary" onclick="exportBackup()">Descargar .json</button>
+          <button class="btn-secondary" style="border-color:#d20a0a;color:#ff8080;" onclick="resetAllData()">
+            Resetear Todo
           </button>
         </div>
-        <div id="sync-details" style="font-size:12px;color:#94a3b8;padding:8px 10px;background:rgba(15,23,42,0.6);border-radius:8px;"></div>
       </div>
     </section>
   </main>
 
-  <!-- Modal Lightbox para ampliar Fotos Paso 1 y Paso 2 -->
-  <div id="image-modal" class="image-modal" onclick="if(event.target===this) closeImageModal()">
-    <div id="image-modal-body" class="image-modal-content"></div>
-  </div>
-
-  <!-- Barra Flotante de Temporizador de Descanso -->
-  <div id="rest-timer-bar" class="rest-timer-bar">
-    <div>
-      <div id="rest-ex-label" style="font-size:11px;color:#a7f3d0;font-weight:800;">Descanso</div>
-      <div id="rest-time-display" class="rest-time-big">01:30</div>
-    </div>
-    <div class="timer-controls">
-      <button onclick="adjustRestTimer(-15)">-15s</button>
-      <button onclick="adjustRestTimer(15)">+15s</button>
-      <button onclick="stopRestTimer()" style="background:rgba(244,63,94,0.4);">Saltar ✕</button>
+  <!-- Modal Detalle de Historial por Ejercicio -->
+  <div id="history-modal" class="modal-overlay" onclick="if(event.target===this) closeHistoryModal()">
+    <div class="modal-sheet">
+      <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #333;padding-bottom:10px;margin-bottom:12px;">
+        <div>
+          <h3 id="modal-ex-title" style="font-size:18px;text-transform:uppercase;color:#fff;font-style:italic;"></h3>
+          <span id="modal-ex-sub" style="font-size:11px;color:#999;font-family:-apple-system, sans-serif;"></span>
+        </div>
+        <button class="btn-secondary" onclick="closeHistoryModal()">Cerrar ✕</button>
+      </div>
+      <div id="modal-history-content"></div>
     </div>
   </div>
 
-  <!-- Navegación Inferior -->
+  <!-- Modal Lightbox Fotos Paso 1 y 2 -->
+  <div id="image-modal" class="modal-overlay" onclick="if(event.target===this) closeImageModal()">
+    <div class="modal-sheet" style="max-width:640px;padding:0;overflow:hidden;">
+      <div id="image-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation UFC -->
   <nav class="bottom-nav">
     <button class="nav-btn active" onclick="switchTab('workout', this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6.5 6.5l11 11M21 21l-1-1M3 3l1 1M18 22l4-4M2 6l4-4M3 10l7-7M14 21l7-7"/></svg>
       <span>Entrenar</span>
     </button>
-    <button class="nav-btn" onclick="switchTab('guide', this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg>
-      <span>Calculadora</span>
-    </button>
-    <button class="nav-btn" onclick="switchTab('progress', this)">
+    <button class="nav-btn" onclick="switchTab('kpis', this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <span>KPIs</span>
+    </button>
+    <button class="nav-btn" onclick="switchTab('measures', this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
       <span>Medidas D/I</span>
     </button>
-    <button class="nav-btn" onclick="switchTab('profile', this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-      <span>Suplementos</span>
+    <button class="nav-btn" onclick="switchTab('calc', this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg>
+      <span>Carga</span>
     </button>
   </nav>
 
